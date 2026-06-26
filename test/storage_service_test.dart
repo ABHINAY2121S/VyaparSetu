@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vyaparsetu/core/services/storage_service.dart';
 import 'package:vyaparsetu/shared/models/user_model.dart';
-import 'package:vyaparsetu/shared/models/business_model.dart';
 
 void main() {
   setUp(() async {
@@ -64,9 +63,6 @@ void main() {
       createdAt: DateTime.now(),
       profileSetupComplete: true,
     );
-    await prefs.setString('user', legacyUser.toJson().toString()); // wait, toJson() is jsonEncode or map?
-    // Let's use jsonEncode for SharedPreferences representation
-    import 'dart:convert';
     await prefs.setString('user', jsonEncode(legacyUser.toJson()));
     await prefs.setString('business', jsonEncode({
       'id': 'biz_legacy',

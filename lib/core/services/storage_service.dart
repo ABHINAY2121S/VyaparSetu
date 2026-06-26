@@ -73,8 +73,57 @@ class StorageService {
   UserModel? getUser() {
     final phone = registeredPhone;
     if (phone == null) return null;
-    final json = _prefs.getString('${_keyUser}_$phone');
-    if (json == null) return null;
+    final scopedKey = '${_keyUser}_$phone';
+    final json = _prefs.getString(scopedKey);
+    if (json == null) {
+      // Check for legacy user migration
+      final legacyJson = _prefs.getString(_keyUser);
+      if (legacyJson != null) {
+        try {
+          final legacyUser = UserModel.fromJson(jsonDecode(legacyJson) as Map<String, dynamic>);
+          if (legacyUser.phone == phone) {
+            // Migrate user profile
+            _prefs.setString(scopedKey, legacyJson);
+            // Migrate business details if present
+            final legacyBiz = _prefs.getString(_keyBusiness);
+            if (legacyBiz != null) {
+              _prefs.setString('${_keyBusiness}_$phone', legacyBiz);
+            }
+            // Migrate transactions if present
+            final legacyTxs = _prefs.getString(_keyTransactions);
+            if (legacyTxs != null) {
+              _prefs.setString('${_keyTransactions}_$phone', legacyTxs);
+            }
+            // Migrate documents if present
+            final legacyDocs = _prefs.getString(_keyDocuments);
+            if (legacyDocs != null) {
+              _prefs.setString('${_keyDocuments}_$phone', legacyDocs);
+            }
+            // Migrate passports if present
+            final legacyPassports = _prefs.getString(_keyPassports);
+            if (legacyPassports != null) {
+              _prefs.setString('${_keyPassports}_$phone', legacyPassports);
+            }
+            // Migrate chat history if present
+            final legacyChat = _prefs.getString(_keyChatHistory);
+            if (legacyChat != null) {
+              _prefs.setString('${_keyChatHistory}_$phone', legacyChat);
+            }
+
+            // Clean up legacy keys so they don't leak or trigger again
+            _prefs.remove(_keyUser);
+            _prefs.remove(_keyBusiness);
+            _prefs.remove(_keyTransactions);
+            _prefs.remove(_keyDocuments);
+            _prefs.remove(_keyPassports);
+            _prefs.remove(_keyChatHistory);
+
+            return legacyUser;
+          }
+        } catch (_) {}
+      }
+      return null;
+    }
     return UserModel.fromJson(jsonDecode(json) as Map<String, dynamic>);
   }
 
