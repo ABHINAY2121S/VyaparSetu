@@ -1,0 +1,92 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Android related
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+/android/.gradle/
+/android/local.properties
+/android/key.properties
+**/*.keystore
+**/*.jks
+**/*.p12
+**/*.pem
+**/*.pfx
+
+# iOS/macOS related
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/GeneratedPluginRegistrant.h
+**/ios/Flutter/GeneratedPluginRegistrant.m
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/flutter_play_compound.a
+**/ios/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Pods/
+**/ios/.symlinks/
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+**/macos/.symlinks/
+
+# Windows desktop related
+/windows/flutter/ephemeral/
+
+# Linux desktop related
+/linux/flutter/ephemeral/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Credentials, tokens, keys & configuration files
+.env
+.env*
+secrets.json
+config_keys.json
+credentials.json
+google-services.json
+GoogleService-Info.plist
+*token*
+*secret*
+!*token*.dart
+!*secret*.dart
+!*token*.png
+!*secret*.png
