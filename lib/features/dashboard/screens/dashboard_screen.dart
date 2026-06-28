@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/document_upload_sheet.dart';
 import '../../../shared/widgets/score_ring_widget.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../shared/widgets/account_sync_sheet.dart';
 import '../../../shared/widgets/trust_tier_badge_widget.dart';
 import '../../../shared/widgets/verification_badge_widget.dart';
 import '../../../shared/models/transaction_model.dart';
@@ -148,21 +149,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ],
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () => _showNotificationsDialog(context, l10n),
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: Colors.transparent,
+                                isScrollControlled: true,
+                                builder: (_) => const AccountSyncSheet(),
+                              );
+                            },
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.sync,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.notifications_none_rounded,
-                            color: Colors.white,
-                            size: 22,
+                          GestureDetector(
+                            onTap: () => _showNotificationsDialog(context, l10n),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.notifications_none_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),

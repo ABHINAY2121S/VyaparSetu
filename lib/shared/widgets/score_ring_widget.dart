@@ -59,6 +59,22 @@ class _ScoreRingWidgetState extends State<ScoreRingWidget>
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(ScoreRingWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.score != widget.score) {
+      if (widget.animate) {
+        _animation = Tween<double>(
+          begin: _animation.value,
+          end: widget.score,
+        ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+        _controller.forward(from: 0);
+      } else {
+        _animation = Tween<double>(begin: widget.score, end: widget.score).animate(_controller);
+      }
+    }
+  }
+
   Color get _scoreColor {
     if (widget.color != null) return widget.color!;
     final ratio = widget.score / widget.maxScore;

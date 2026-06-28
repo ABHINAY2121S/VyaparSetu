@@ -16,12 +16,14 @@ class AiAdvisorProvider extends ChangeNotifier {
   // Streaming state
   String _streamingMsgId = '';
 
-  // Ollama is always ready — no API key needed
   bool get isApiKeySet => true;
 
   List<ChatMessageModel> get messages => _messages;
   bool get isLoading => _isLoading;
   bool get hasMessages => _messages.isNotEmpty;
+
+  /// Reflects which backend responded last (updated after each message).
+  AiBackend get activeBackend => _aiService.activeBackend;
 
   // ── Init ──────────────────────────────────────────────────────────────────
   Future<void> init({required Map<String, dynamic> context}) async {
@@ -62,7 +64,7 @@ class AiAdvisorProvider extends ChangeNotifier {
           '- 📊 Improving your business scores\n'
           '- 💰 EMI calculations & financial planning\n'
           '- 📈 Growth strategies for your business\n\n'
-          '✅ **Ollama AI is active** — ask me anything in Hindi, Marathi, or English! 🎤 Use the mic button to speak.',
+          '✅ **AI Advisor is active** — ask me anything in Hindi, Marathi, or English! 🎤 Use the mic button to speak.',
       role: ChatRole.assistant,
       timestamp: DateTime.now(),
     ));
@@ -132,7 +134,7 @@ class AiAdvisorProvider extends ChangeNotifier {
 
     _isLoading = false;
     _streamingMsgId = '';
-    notifyListeners();
+    notifyListeners(); // ← backend may have changed, UI will pick it up
     await _storage.saveChatHistory(_messages);
   }
 

@@ -11,7 +11,6 @@ import 'features/ai_advisor/providers/ai_advisor_provider.dart';
 import 'features/schemes/providers/scheme_provider.dart';
 import 'features/home/home_screen.dart';
 import 'features/onboarding/screens/splash_screen.dart';
-import 'features/onboarding/screens/language_selection_screen.dart';
 import 'features/onboarding/screens/mobile_login_screen.dart';
 import 'features/onboarding/screens/business_registration_screen.dart';
 import 'features/onboarding/screens/document_upload_screen.dart';
@@ -19,6 +18,7 @@ import 'features/transactions/screens/add_transaction_screen.dart';
 import 'features/transactions/screens/transaction_detail_screen.dart';
 
 import 'core/services/upi_statement_parser.dart';
+import 'core/services/account_aggregator_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,10 +42,14 @@ void main() async {
   // Initialize local storage
   await StorageService.instance.init();
 
-  // Configure Gemini AI for bank statement parsing
-  // Pass key via: flutter run --dart-define=GEMINI_API_KEY=your_key_here
-  const geminiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+  // Configure Gemini AI for statement parsing + SMS sync
+  // Option 1 (recommended for dev): paste your key in _kGeminiKey below
+  // Option 2 (CI/prod): flutter run --dart-define=GEMINI_API_KEY=your_key_here
+  const _kGeminiKey = '';
+  const _envKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+  final geminiKey = _envKey.isNotEmpty ? _envKey : _kGeminiKey;
   UpiStatementParser.configure(geminiKey);
+  AccountAggregatorService.configure(geminiKey);
 
   runApp(const VyaparSetuApp());
 }
@@ -73,7 +77,6 @@ class VyaparSetuApp extends StatelessWidget {
             initialRoute: '/splash',
             routes: {
               '/splash': (_) => const SplashScreen(),
-              '/onboarding': (_) => const LanguageSelectionScreen(),
               '/login': (_) => const MobileLoginScreen(),
               '/register': (_) => const BusinessRegistrationScreen(),
               '/documents': (_) => const DocumentUploadScreen(),

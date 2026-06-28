@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/models/chat_message_model.dart';
+import '../../../core/services/ai_service.dart';
 import '../providers/ai_advisor_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 
@@ -255,26 +256,7 @@ class _AiAdvisorScreenState extends State<AiAdvisorScreen>
               Text('AI Advisor',
                   style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700, fontSize: 15)),
-              Row(
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.success,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Ollama AI • Active',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      color: AppColors.success,
-                    ),
-                  ),
-                ],
-              ),
+              _buildBackendChip(provider.activeBackend),
             ],
           ),
         ],
@@ -285,6 +267,39 @@ class _AiAdvisorScreenState extends State<AiAdvisorScreen>
           tooltip: 'Clear chat',
           onPressed: () => provider.clearChat(),
         ),
+      ],
+    );
+  }
+
+  // ── Backend status chip ───────────────────────────────────────────────────
+  Widget _buildBackendChip(AiBackend backend) {
+    late Color dotColor;
+    late String label;
+
+    switch (backend) {
+      case AiBackend.ollama:
+        dotColor = AppColors.success;
+        label = 'Ollama • Local';
+        break;
+      case AiBackend.gemini:
+        dotColor = const Color(0xFF4285F4); // Google blue
+        label = 'Gemini • Cloud';
+        break;
+      case AiBackend.none:
+        dotColor = AppColors.textTertiary;
+        label = 'AI • Connecting';
+        break;
+    }
+
+    return Row(
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: dotColor),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: GoogleFonts.inter(fontSize: 10, color: dotColor)),
       ],
     );
   }

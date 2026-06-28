@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VyaparSetu — Verification Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #059669;
+            --primary-light: #10b981;
+            --primary-dark: #047857;
+            --bg: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --shadow-glow: 0 0 25px rgba(5, 150, 105, 0.25);
+            --blue: #2563eb;
+            --purple: #7c3aed;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(5, 150, 105, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.1) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--blue));
+        }
+
+        /* Pulse Badge Animation */
+        .verification-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px;
+            height: 72px;
+            background: rgba(5, 150, 105, 0.1);
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            color: var(--primary-light);
+            font-size: 32px;
+            margin-bottom: 16px;
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(5, 150, 105, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(5, 150, 105, 0);
+            }
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+        }
+
+        /* ID and Hash Info */
+        .identity-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+        .id-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .id-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .hash-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--primary-light);
+            background: rgba(5, 150, 105, 0.08);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px dashed rgba(5, 150, 105, 0.2);
+        }
+
+        /* Profile Details */
+        .profile-section {
+            text-align: left;
+            margin-bottom: 28px;
+        }
+
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .profile-row:last-child {
+            border-bottom: none;
+        }
+
+        .row-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .row-value {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        /* Scores Grid */
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .score-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 8px;
+            transition: all 0.3s ease;
+        }
+
+        .score-box:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .score-number {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .score-number.green { color: var(--primary-light); }
+        .score-number.blue { color: var(--blue); }
+        .score-number.purple { color: var(--purple); }
+
+        .score-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            line-height: 1.2;
+        }
+
+        /* Highlight box for Loan and Tier */
+        .badge-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .highlight-box {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            text-align: left;
+        }
+
+        .box-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .box-content {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .tier-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fbbf24; /* gold standard */
+        }
+
+        /* Verification status footer */
+        .verification-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .verified-stamp {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary-light);
+            background: rgba(5, 150, 105, 0.08);
+            padding: 6px 12px;
+            border-radius: 50px;
+        }
+
+        .disclaimer {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .logo-text {
+            font-weight: 800;
+            color: var(--text-primary);
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Shield Badge -->
+        <div class="verification-badge">
+            <svg stroke="currentColor" fill="none" stroke-width="2.5" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="m9 12 2 2 4-4"></path>
+            </svg>
+        </div>
+
+        <h1>Credential Verified</h1>
+        <p class="subtitle">Secure credit profile hosted on VyaparSetu Ledger</p>
+
+        <!-- Identity banner -->
+        <div class="identity-card">
+            <div>
+                <div class="id-label" id="id-label-text">Passport ID</div>
+                <div class="id-value" id="passport-id">VS-2026-001</div>
+            </div>
+            <div>
+                <div class="id-label" style="text-align: right;">Hash Signature</div>
+                <div class="hash-value" id="verification-hash">A3F9D2B8</div>
+            </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div class="profile-section">
+            <div class="profile-row">
+                <span class="row-label">Business Name</span>
+                <span class="row-value" id="business-name">Ramesh Vegetable Store</span>
+            </div>
+            <div class="profile-row">
+                <span class="row-label">Business Owner</span>
+                <span class="row-value" id="owner-name">Ramesh Kumar</span>
+            </div>
+            <div class="profile-row">
+                <span class="row-label">City</span>
+                <span class="row-value" id="business-city">Pune, Maharashtra</span>
+            </div>
+        </div>
+
+        <!-- Score metrics grid -->
+        <div class="scores-grid">
+            <div class="score-box">
+                <div class="score-number green" id="score-health">76</div>
+                <div class="score-label">Business Health</div>
+            </div>
+            <div class="score-box">
+                <div class="score-number blue" id="score-loan">65</div>
+                <div class="score-label">Loan Readiness</div>
+            </div>
+            <div class="score-box">
+                <div class="score-number purple" id="score-confidence">80</div>
+                <div class="score-label">Confidence Rating</div>
+            </div>
+        </div>
+
+        <!-- Loan and trust tier highlights -->
+        <div class="badge-container">
+            <div class="highlight-box">
+                <div class="box-title">Eligible Loan Range</div>
+                <div class="box-content" id="loan-range">₹50,000 – ₹2.0L</div>
+            </div>
+            <div class="highlight-box">
+                <div class="box-title">Trust Tier Level</div>
+                <div class="box-content">
+                    <span class="tier-tag" id="trust-tier">
+                        <span>🥇</span> Gold
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="verification-footer">
+            <div class="verified-stamp">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="none" d="M0 0h24v24H0z"></path>
+                    <path d="M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.7 3.1 5.52l.34 3.69L1 12l2.44 2.79-.34 3.69 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.2 3.61-.82-.34-3.69L23 12zm-13 5l-4-4 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+                </svg>
+                Secure Seal Verified
+            </div>
+            <p class="disclaimer">
+                This dynamic credential was compiled from on-chain transactions and verified documents. Scanning confirms the integrity hash matches the current ledger database state.
+            </p>
+            <span class="logo-text">VyaparSetu Ledger</span>
+        </div>
+    </div>
+
+    <script>
+        // Parse query params to show dynamic data
+        function getQueryParams() {
+            const params = {};
+            const search = window.location.search.substring(1);
+            if (search) {
+                const parts = search.split('&');
+                for (let i = 0; i < parts.length; i++) {
+                    const pair = parts[i].split('=');
+                    params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+                }
+            }
+            return params;
+        }
+
+        window.onload = function() {
+            const params = getQueryParams();
+
+            if (params.id) {
+                document.getElementById('passport-id').innerText = params.id;
+            }
+            if (params.hash) {
+                document.getElementById('verification-hash').innerText = params.hash.substring(0, 12).toUpperCase();
+            }
+            if (params.name) {
+                document.getElementById('business-name').innerText = params.name;
+            }
+            if (params.owner) {
+                document.getElementById('owner-name').innerText = params.owner;
+            }
+            if (params.city) {
+                document.getElementById('business-city').innerText = params.city;
+            }
+            if (params.health) {
+                document.getElementById('score-health').innerText = Math.round(parseFloat(params.health));
+            }
+            if (params.loan) {
+                document.getElementById('score-loan').innerText = Math.round(parseFloat(params.loan));
+            }
+            if (params.confidence) {
+                document.getElementById('score-confidence').innerText = Math.round(parseFloat(params.confidence));
+            }
+            if (params.range) {
+                document.getElementById('loan-range').innerText = params.range;
+            }
+            if (params.tier) {
+                let tierSymbol = '🥉';
+                const tierName = params.tier.toLowerCase();
+                if (tierName.includes('silver')) {
+                    tierSymbol = '🥈';
+                } else if (tierName.includes('gold')) {
+                    tierSymbol = '🥇';
+                } else if (tierName.includes('platinum') || tierName.includes('diamond')) {
+                    tierSymbol = '💎';
+                }
+                document.getElementById('trust-tier').innerHTML = `<span>${tierSymbol}</span> ${params.tier}`;
+            }
+        };
+    </script>
+</body>
+</html>

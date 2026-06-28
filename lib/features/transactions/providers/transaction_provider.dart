@@ -162,6 +162,19 @@ class TransactionProvider extends ChangeNotifier {
         date = DateTime.now();
       }
 
+      // Deduplication check: Don't import if we already have this exact bank transaction
+      final isDuplicate = _transactions.any((t) =>
+          t.isBankImported &&
+          t.type == type &&
+          t.amount == amount &&
+          t.date.year == date.year &&
+          t.date.month == date.month &&
+          t.date.day == date.day &&
+          t.date.hour == date.hour &&
+          t.date.minute == date.minute);
+          
+      if (isDuplicate) continue;
+
       final id = _uuid.v4();
       final hash = _generateHash(
         id: id,

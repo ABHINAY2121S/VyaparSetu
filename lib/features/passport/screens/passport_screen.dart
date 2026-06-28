@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/utils/formatters.dart';
@@ -237,6 +239,30 @@ class _PassportScreenState extends State<PassportScreen>
     final user = dashProvider.user;
     final tier = dashProvider.trustTier;
 
+    final trustScore = TrustTierCalculator.computeScore(
+      transactions: dashProvider.transactions,
+      documents: dashProvider.documents,
+      confidenceScore: passport.confidenceScore,
+    );
+    final trustTier = TrustTierCalculator.fromScore(trustScore);
+
+    final verificationUrl = Uri.https(
+      'abhinay2121s.github.io',
+      '/VyaparSetu-Web/',
+      {
+        'id': passport.passportId,
+        'hash': passport.verificationHash,
+        'name': business?.businessName ?? '',
+        'owner': user?.name ?? '',
+        'city': business?.city ?? '',
+        'health': passport.businessHealthScore.round().toString(),
+        'loan': passport.loanReadinessScore.round().toString(),
+        'confidence': passport.confidenceScore.round().toString(),
+        'range': passport.recommendedLoanRange,
+        'tier': trustTier.label,
+      },
+    ).toString();
+
     return SlideTransition(
       position: Tween<Offset>(
         begin: const Offset(0, 0.3),
@@ -341,40 +367,87 @@ class _PassportScreenState extends State<PassportScreen>
                 const SizedBox(height: 24),
                 Divider(color: Colors.white.withValues(alpha: 0.7), height: 1),
                 const SizedBox(height: 20),
-                // Business Info
-                Text(
-                  business?.businessName ?? 'Your Business',
-                  style: GoogleFonts.inter(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
+                // Business Info + QR Code Row
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      user?.name ?? '',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.7),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            business?.businessName ?? 'Your Business',
+                            style: GoogleFonts.inter(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                user?.name ?? '',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                ),
+                              ),
+                              if (business?.city != null) ...[
+                                Text(
+                                  '  •  ',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                                Text(
+                                  business!.city,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    if (business?.city != null) ...[
-                      Text(
-                        '  •  ',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () => _showVerificationDialog(context, passport, l10n),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Hero(
+                          tag: 'passport_qr',
+                          child: QrImageView(
+                            data: verificationUrl,
+                            version: QrVersions.auto,
+                            size: 44.0,
+                            gapless: false,
+                            eyeStyle: const QrEyeStyle(
+                              eyeShape: QrEyeShape.square,
+                              color: Color(0xFF064E3B),
+                            ),
+                            dataModuleStyle: const QrDataModuleStyle(
+                              dataModuleShape: QrDataModuleShape.square,
+                              color: Color(0xFF064E3B),
+                            ),
+                          ),
                         ),
                       ),
-                      Text(
-                        business!.city,
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -864,6 +937,160 @@ class _PassportScreenState extends State<PassportScreen>
       documents: dashProvider.documents,
       user: dashProvider.user!,
       business: dashProvider.business!,
+    );
+  }
+
+  void _showVerificationDialog(
+    BuildContext context,
+    PassportModel passport,
+    L10n l10n,
+  ) {
+    final dashProvider = context.read<DashboardProvider>();
+    final business = dashProvider.business;
+    final user = dashProvider.user;
+    final transactions = dashProvider.transactions;
+    final documents = dashProvider.documents;
+
+    final trustScore = TrustTierCalculator.computeScore(
+      transactions: transactions,
+      documents: documents,
+      confidenceScore: passport.confidenceScore,
+    );
+    final trustTier = TrustTierCalculator.fromScore(trustScore);
+
+    final verificationUrl = Uri.https(
+      'abhinay2121s.github.io',
+      '/VyaparSetu-Web/',
+      {
+        'id': passport.passportId,
+        'hash': passport.verificationHash,
+        'name': business?.businessName ?? '',
+        'owner': user?.name ?? '',
+        'city': business?.city ?? '',
+        'health': passport.businessHealthScore.round().toString(),
+        'loan': passport.loanReadinessScore.round().toString(),
+        'confidence': passport.confidenceScore.round().toString(),
+        'range': passport.recommendedLoanRange,
+        'tier': trustTier.label,
+      },
+    ).toString();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.padding24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.pick('Verify Passport', 'पासपोर्ट सत्यापित करें', 'पासपोर्ट सत्यापित करा'),
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusLG),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: QrImageView(
+                      data: verificationUrl,
+                      version: QrVersions.auto,
+                      size: 180.0,
+                      gapless: false,
+                      eyeStyle: const QrEyeStyle(
+                        eyeShape: QrEyeShape.square,
+                        color: Color(0xFF064E3B),
+                      ),
+                      dataModuleStyle: const QrDataModuleStyle(
+                        dataModuleShape: QrDataModuleShape.square,
+                        color: Color(0xFF064E3B),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.pick(
+                      'Scan to Verify Authenticity',
+                      'सत्यता सत्यापित करने के लिए स्कैन करें',
+                      'सत्यता सत्यापित करण्यासाठी स्कॅन करा',
+                    ),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.pick(
+                      'Lenders and banks can scan this QR code to view your verified live credit score on our official portal, protecting against document tampering.',
+                      'ऋणदाता और बैंक आपके सत्यापित लाइव क्रेडिट स्कोर को हमारे आधिकारिक पोर्टल पर देखने के लिए इस क्यूआर कोड को स्कैन कर सकते हैं, जिससे दस्तावेज़ के साथ छेड़छाड़ से सुरक्षा मिलती है।',
+                      'कर्जदार आणि बँका तुमच्या सत्यापित लाइव्ह क्रेडिट स्कोअरला आमच्या अधिकृत पोर्टलवर पाहण्यासाठी हा क्यूआर कोड स्कॅन करू शकतात, ज्यामुळे दस्तऐवजातील छेडछाडीपासून संरक्षण मिळते.',
+                    ),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: verificationUrl));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              l10n.pick(
+                                'Verification link copied!',
+                                'सत्यापन लिंक कॉपी की गई!',
+                                'सत्यापन लिंक कॉपी केली!',
+                              ),
+                            ),
+                          ),
+                        );
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    label: Text(l10n.pick('Copy Verification Link', 'सत्यापन लिंक कॉपी करें', 'सत्यापन लिंक कॉपी करा')),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, AppDimensions.buttonHeightMD),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMD),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

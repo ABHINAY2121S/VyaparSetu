@@ -23,6 +23,25 @@ class OcrService {
   OcrService._();
   static final OcrService instance = OcrService._();
 
+  /// Scan [imageFile] with ML Kit and extract raw text for document verification.
+  Future<String?> scanDocument(File imageFile) async {
+    final inputImage = InputImage.fromFile(imageFile);
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+
+    try {
+      final RecognizedText recognized = await textRecognizer.processImage(inputImage);
+      final rawText = recognized.text;
+      debugPrint('[OCR] Scanned Document Text:\n$rawText');
+      if (rawText.trim().isEmpty) return null;
+      return rawText;
+    } catch (e) {
+      debugPrint('[OCR] Failed to scan document: $e');
+      return null;
+    } finally {
+      textRecognizer.close();
+    }
+  }
+
   /// Scan [imageFile] with ML Kit and extract amount + description from receipt.
   Future<OcrResult> scanReceipt(File imageFile) async {
     final inputImage = InputImage.fromFile(imageFile);

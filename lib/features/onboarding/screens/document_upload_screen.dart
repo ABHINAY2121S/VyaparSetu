@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
+import '../../../core/services/identity_verification_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../shared/models/document_model.dart';
 import '../../../shared/widgets/gradient_button.dart';
@@ -51,6 +53,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       }
 
       final localPath = result.files.single.path!;
+      final imageFile = File(localPath);
 
       if (!mounted) return;
       setState(() => _uploading.add(doc.id));
@@ -59,6 +62,23 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       final verifyingDoc = doc.copyWith(status: DocumentStatus.verifying);
       _updateDocument(verifyingDoc);
 
+      // 1. Call Identity Verification Service
+      final provider = context.read<OnboardingProvider>();
+      final userPhone = provider.user?.phone ?? '9999999999';
+      
+      final verificationResult = await IdentityVerificationService.instance.verifyDocument(
+        imageFile,
+        doc.type,
+        userPhone,
+      );
+
+      if (!mounted) return;
+      
+      if (!verificationResult.success) {
+        throw Exception(verificationResult.message);
+      }
+
+      // 2. Accept & Save Directly (No Dialog Pop-up)
       // Mark as verified with local file path (offline-first)
       final verifiedDoc = doc.copyWith(
         status: DocumentStatus.verified,
@@ -68,7 +88,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       _updateDocument(verifiedDoc);
 
       // Save locally
-      _storage.saveDocuments(_documents);
+      await _storage.saveDocuments(_documents);
 
       messenger.showSnackBar(
         SnackBar(content: Text('${doc.name} uploaded successfully!')),
@@ -78,14 +98,41 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       final pendingDoc = doc.copyWith(status: DocumentStatus.pending);
       if (mounted) _updateDocument(pendingDoc);
 
+      String errorMsg = 'Failed to upload ${doc.name}';
+      if (e is Exception) {
+        errorMsg = e.toString().replaceAll('Exception: ', '');
+      }
+
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to upload ${doc.name}: $e')),
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 4),
+        ),
       );
     } finally {
       if (mounted) {
         setState(() => _uploading.remove(doc.id));
       }
     }
+  }
+
+  Widget _buildDialogRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 60, 
+            child: Text(label, style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 13))
+          ),
+          Expanded(
+            child: Text(value, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary))
+          ),
+        ],
+      ),
+    );
   }
 
   void _updateDocument(DocumentModel updated) {

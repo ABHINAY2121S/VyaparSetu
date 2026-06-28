@@ -21,6 +21,7 @@ class StorageService {
   static const _keySelectedLanguage = 'selected_language';
   static const _keyRegisteredPhone = 'registered_phone';
   static const _keyPinPrefix = 'pin_'; // pin_<phone> = hashed pin
+  static const _keyBiometricPrefix = 'biometric_'; // biometric_<phone> = bool
 
   late SharedPreferences _prefs;
 
@@ -65,6 +66,16 @@ class StorageService {
   /// Returns true if a PIN has been set for the given phone number.
   bool hasPin(String phone) {
     return _prefs.containsKey('$_keyPinPrefix$phone');
+  }
+
+  /// Returns true if the user opted in to biometric login for this phone.
+  bool isBiometricEnabled(String phone) {
+    return _prefs.getBool('$_keyBiometricPrefix$phone') ?? false;
+  }
+
+  /// Save the user's biometric preference for this phone.
+  Future<void> setBiometricEnabled(String phone, bool enabled) async {
+    await _prefs.setBool('$_keyBiometricPrefix$phone', enabled);
   }
 
   // ── User ─────────────────────────────────────────────────────────────────

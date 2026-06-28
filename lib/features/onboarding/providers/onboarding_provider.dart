@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/models/business_model.dart';
 
 class OnboardingProvider extends ChangeNotifier {
   final StorageService _storage = StorageService.instance;
+  final LocalAuthentication _localAuth = LocalAuthentication();
 
   bool _isOnboardingComplete = false;
   String _selectedLanguage = 'en';
@@ -12,6 +14,7 @@ class OnboardingProvider extends ChangeNotifier {
   BusinessModel? _business;
   bool _isLoading = false;
   String? _error;
+  bool _biometricAvailable = false;
 
   bool get isOnboardingComplete => _isOnboardingComplete;
   String get selectedLanguage => _selectedLanguage;
@@ -19,13 +22,47 @@ class OnboardingProvider extends ChangeNotifier {
   BusinessModel? get business => _business;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get biometricAvailable => _biometricAvailable;
 
   Future<void> init() async {
     _isOnboardingComplete = _storage.isOnboardingComplete;
     _selectedLanguage = _storage.selectedLanguage;
     _user = _storage.getUser();
     _business = _storage.getBusiness();
+    // Check hardware biometric support once at startup
+    try {
+      _biometricAvailable = await _localAuth.canCheckBiometrics ||
+          await _localAuth.isDeviceSupported();
+    } catch (_) {
+      _biometricAvailable = false;
+    }
     notifyListeners();
+  }
+
+  /// Returns true if this phone number has biometric login enabled.
+  bool isBiometricEnabled(String phone) =>
+      _storage.isBiometricEnabled(phone);
+
+  /// Persists the user's choice to use (or not use) biometric login.
+  Future<void> setBiometricEnabled(String phone, bool enabled) async {
+    await _storage.setBiometricEnabled(phone, enabled);
+    notifyListeners();
+  }
+
+  /// Triggers the system biometric prompt.
+  /// Returns true if the user authenticated successfully.
+  Future<bool> authenticateWithBiometric() async {
+    try {
+      return await _localAuth.authenticate(
+        localizedReason: 'Use fingerprint to access VyaparSetu',
+        options: const AuthenticationOptions(
+          biometricOnly: false, // falls back to device PIN/pattern if needed
+          stickyAuth: true,
+        ),
+      );
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> selectLanguage(String lang) async {
@@ -36,6 +73,15 @@ class OnboardingProvider extends ChangeNotifier {
 
   /// Returns true if there is a registered account for this phone number.
   bool isRegistered(String phone) => _storage.hasPin(phone);
+
+  /// Sets this phone as the active session and loads its user/business data.
+  /// Used after biometric authentication where we skip PIN verification.
+  Future<void> setActivePhone(String phone) async {
+    await _storage.saveRegisteredPhone(phone);
+    _user = _storage.getUser();
+    _business = _storage.getBusiness();
+    notifyListeners();
+  }
 
   /// Login: verify phone + PIN locally.
   Future<bool> loginWithPin({

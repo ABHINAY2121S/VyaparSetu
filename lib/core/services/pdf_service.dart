@@ -3,6 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../constants/app_strings.dart';
+import '../utils/trust_tier.dart';
 import '../../shared/models/passport_model.dart';
 import '../../shared/models/business_model.dart';
 import '../../shared/models/user_model.dart';
@@ -108,7 +109,16 @@ class PdfService {
           pw.SizedBox(height: 20),
 
           // Immutable Record
-          _buildImmutableRecord(passport, borderColor, grayColor, primaryColor),
+          _buildImmutableRecord(
+            passport,
+            business,
+            user,
+            transactions,
+            documents,
+            borderColor,
+            grayColor,
+            primaryColor,
+          ),
           pw.SizedBox(height: 16),
 
           // Footer
@@ -214,7 +224,7 @@ class PdfService {
               borderRadius: pw.BorderRadius.circular(4),
             ),
             child: pw.Text(
-              '🔒 SEALED',
+              'SEALED',
               style: pw.TextStyle(
                 fontSize: 9,
                 fontWeight: pw.FontWeight.bold,
@@ -318,7 +328,7 @@ class PdfService {
               pw.SizedBox(width: 20),
               _buildProfileField(
                 'Revenue Range',
-                business.revenueRange,
+                business.revenueRange.replaceAll('₹', 'Rs. '),
                 dark,
                 gray,
               ),
@@ -486,7 +496,7 @@ class PdfService {
             ),
             pw.SizedBox(height: 4),
             pw.Text(
-              '₹${_formatAmount(amount)}',
+              'Rs. ${_formatAmount(amount)}',
               style: pw.TextStyle(
                 fontSize: 16,
                 fontWeight: pw.FontWeight.bold,
@@ -525,16 +535,6 @@ class PdfService {
           child: pw.Row(
             mainAxisSize: pw.MainAxisSize.min,
             children: [
-              pw.Text(
-                isVerified ? '✓ ' : '○ ',
-                style: pw.TextStyle(
-                  fontSize: 10,
-                  color: isVerified
-                      ? PdfColor.fromHex('#059669')
-                      : PdfColor.fromHex('#9CA3AF'),
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
               pw.Text(
                 doc.name,
                 style: pw.TextStyle(
@@ -630,7 +630,7 @@ class PdfService {
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                passport.recommendedLoanRange,
+                passport.recommendedLoanRange.replaceAll('₹', 'Rs. '),
                 style: pw.TextStyle(
                   fontSize: 20,
                   fontWeight: pw.FontWeight.bold,
@@ -681,38 +681,91 @@ class PdfService {
 
   pw.Widget _buildImmutableRecord(
     PassportModel passport,
+    BusinessModel business,
+    UserModel user,
+    List<TransactionModel> transactions,
+    List<DocumentModel> documents,
     PdfColor border,
     PdfColor gray,
     PdfColor primary,
   ) {
+    final trustScore = TrustTierCalculator.computeScore(
+      transactions: transactions,
+      documents: documents,
+      confidenceScore: passport.confidenceScore,
+    );
+    final trustTier = TrustTierCalculator.fromScore(trustScore);
+
+    final verificationUrl = Uri.https(
+      'abhinay2121s.github.io',
+      '/VyaparSetu-Web/',
+      {
+        'id': passport.passportId,
+        'hash': passport.verificationHash,
+        'name': business.businessName,
+        'owner': user.name,
+        'city': business.city,
+        'health': passport.businessHealthScore.round().toString(),
+        'loan': passport.loanReadinessScore.round().toString(),
+        'confidence': passport.confidenceScore.round().toString(),
+        'range': passport.recommendedLoanRange,
+        'tier': trustTier.label,
+      },
+    ).toString();
+
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: border, width: 2),
         borderRadius: pw.BorderRadius.circular(8),
       ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Row(
-            children: [
-              pw.Text(
-                '🔒 Immutable Record — This document is cryptographically sealed',
-                style: pw.TextStyle(
-                  fontSize: 9,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColor.fromHex('#374151'),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Immutable Record - This document is cryptographically sealed',
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColor.fromHex('#374151'),
+                  ),
                 ),
-              ),
-            ],
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  'Verification Hash: ${passport.verificationHash}',
+                  style: pw.TextStyle(
+                    fontSize: 8,
+                    color: gray,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  'To verify, scan the QR code or visit: https://abhinay2121s.github.io/VyaparSetu-Web/',
+                  style: pw.TextStyle(
+                    fontSize: 7.5,
+                    color: gray,
+                  ),
+                ),
+              ],
+            ),
           ),
-          pw.SizedBox(height: 8),
-          pw.Text(
-            'Verification Hash: ${passport.verificationHash}',
-            style: pw.TextStyle(
-              fontSize: 8,
-              color: gray,
-              fontStyle: pw.FontStyle.italic,
+          pw.SizedBox(width: 12),
+          pw.Container(
+            padding: const pw.EdgeInsets.all(4),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: border),
+              borderRadius: pw.BorderRadius.circular(4),
+            ),
+            child: pw.BarcodeWidget(
+              barcode: pw.Barcode.qrCode(),
+              data: verificationUrl,
+              width: 50,
+              height: 50,
             ),
           ),
         ],
@@ -729,7 +782,7 @@ class PdfService {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(
-              'Generated by VyaparSetu — vyaparsetu.app',
+              'Generated by VyaparSetu - vyaparsetu.app',
               style: pw.TextStyle(fontSize: 8, color: gray),
             ),
             pw.Text(
