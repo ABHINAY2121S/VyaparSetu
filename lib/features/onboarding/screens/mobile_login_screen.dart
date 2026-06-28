@@ -21,7 +21,7 @@ class MobileLoginScreen extends StatefulWidget {
 }
 
 class _MobileLoginScreenState extends State<MobileLoginScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
@@ -73,23 +73,29 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   // ── Biometric auto-trigger ──────────────────────────────────────────────
   Future<void> _tryBiometricIfAvailable() async {
     final provider = context.read<OnboardingProvider>();
-    final phone = provider.user?.phone ??
-        provider.business?.id.replaceAll('biz_', '') ?? '';
+
+    // Ensure hardware check is done — may be a no-op if splash already ran it.
+    await provider.checkBiometricAvailability();
+    if (!mounted) return;
+
     final storedPhone = StorageService.instance.registeredPhone ?? '';
-    final activePhone = storedPhone.isNotEmpty ? storedPhone : phone;
-    if (activePhone.isEmpty) return;
+    final phone = storedPhone.isNotEmpty
+        ? storedPhone
+        : (provider.user?.phone ??
+            provider.business?.id.replaceAll('biz_', '') ?? '');
+    if (phone.isEmpty) return;
     if (!provider.biometricAvailable) return;
-    if (!provider.isBiometricEnabled(activePhone)) return;
+    if (!provider.isBiometricEnabled(phone)) return;
 
     // Pre-fill phone for UX clarity
-    _phoneController.text = activePhone;
+    _phoneController.text = phone;
 
     final ok = await provider.authenticateWithBiometric();
     if (!mounted) return;
     if (ok) {
-      await provider.setActivePhone(activePhone);
+      await provider.setActivePhone(phone);
       if (!mounted) return;
-      await _finishLogin(provider, activePhone);
+      await _finishLogin(provider, phone);
     }
   }
 

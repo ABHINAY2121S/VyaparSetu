@@ -29,7 +29,13 @@ class OnboardingProvider extends ChangeNotifier {
     _selectedLanguage = _storage.selectedLanguage;
     _user = _storage.getUser();
     _business = _storage.getBusiness();
-    // Check hardware biometric support once at startup
+    notifyListeners();
+  }
+
+  /// Call this AFTER the first frame is rendered (e.g. in a screen's initState
+  /// via addPostFrameCallback) — not before runApp.
+  Future<void> checkBiometricAvailability() async {
+    if (_biometricAvailable) return; // already checked
     try {
       _biometricAvailable = await _localAuth.canCheckBiometrics ||
           await _localAuth.isDeviceSupported();
